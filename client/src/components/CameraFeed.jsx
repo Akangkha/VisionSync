@@ -42,7 +42,7 @@ const CameraCapture = () => {
           const imageData = canvas.toDataURL("image/jpeg");
           ws.send(JSON.stringify({ type: "image", image: imageData }));
           console.log("📤 Sent image to server");
-        }, 5000);
+        }, 5000); //time
         return () => clearInterval(interval);
       } catch (err) {
         console.error("Error accessing camera:", err);
