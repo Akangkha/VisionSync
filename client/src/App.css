@@ -1,0 +1,190 @@
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap");
+html,
+body,
+#root {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: auto;
+  box-sizing: content-box;
+  background-color: black;
+  animation: pulseBackground 4s infinite alternate ease-in-out;
+}
+
+.App {
+  font-family: sans-serif;
+  text-align: center;
+  display: flex;
+  height: 100%;
+  gap: 10px;
+  &:focus {
+    outline: none;
+  }
+}
+
+.counter {
+  font-family: "Orbitron", sans-serif;
+  color: lime;
+}
+
+@keyframes pulseBackground {
+  0% {
+    background-color: rgb(20, 40, 20);
+  }
+  50% {
+    background-color: rgb(40, 20, 20);
+  }
+  100% {
+    background-color: rgb(20, 40, 20);
+  }
+}
+
+.setting {
+  /* align-self: flex-start; */
+  padding: 5px 10px;
+
+  button {
+    font-size: 15px;
+  }
+
+  input {
+    font-size: 20px;
+  }
+}
+:root {
+  --top-opacity: 1;
+  --right-opacity: 1;
+  --bottom-opacity: 1;
+  --left-opacity: 1;
+  --current-opacity: 1;
+  --wall-brightness: 100%;
+}
+
+/* Walls */
+.topWall {
+  border-top: 4px solid rgba(255, 0, 0, var(--top-opacity));
+  filter: brightness(var(--wall-brightness));
+}
+
+.rightWall {
+  border-right: 4px solid rgba(255, 0, 0, var(--right-opacity));
+  filter: brightness(var(--wall-brightness));
+}
+
+.bottomWall {
+  border-bottom: 4px solid rgba(255, 0, 0, var(--bottom-opacity));
+  filter: brightness(var(--wall-brightness));
+}
+
+.leftWall {
+  border-left: 4px solid rgba(255, 0, 0, var(--left-opacity));
+  filter: brightness(var(--wall-brightness));
+}
+
+/* Define the animation for wall colors */
+@keyframes wallColorCycle {
+  0% {
+    border-color: cyan;
+  }
+  33% {
+    border-color: red;
+  }
+  66% {
+    border-color: red;
+  }
+  100% {
+    border-color: white;
+  }
+}
+
+/* Apply the animation to all walls */
+.topWall,
+.rightWall,
+.bottomWall,
+.leftWall {
+  animation: wallColorCycle 20s linear infinite; /* 60s cycle */
+}
+
+.sol {
+  div {
+    height: 50%;
+    width: 50%;
+    border-radius: 50%;
+    background: peachpuff;
+    display: inline-block;
+  }
+}
+
+.currentPosition {
+  div {
+    background: cyan;
+    height: 100%;
+    width: 100%;
+    border-radius: 50%;
+    display: block;
+  }
+}
+
+.destination {
+  div {
+    background-color: rgba(255, 255, 0, var(--current-opacity));
+    height: 100%;
+    width: 100%;
+    border-radius: 50%;
+    display: block;
+  }
+}
+
+.currentPosition.destination {
+  div {
+    animation: rainbowBall 5s infinite;
+  }
+}
+
+@keyframes rainbowBall {
+  0% {
+    background-color: gold;
+  }
+  15% {
+    background-color: coral;
+  }
+  29% {
+    background-color: papayawhip;
+  }
+  43% {
+    background-color: darkseagreen;
+  }
+  57% {
+    background-color: lightcyan;
+  }
+  71% {
+    background-color: dodgerblue;
+  }
+  84% {
+    background-color: violet;
+  }
+  100% {
+    background-color: indigo;
+  }
+}
+
+#maze {
+  margin-top: 15px;
+  border-collapse: collapse;
+  td {
+    height: 20px;
+    width: 20px;
+  }
+}
+
+.info {
+  margin-top: 20px;
+  width: 100%;
+  background: cornsilk;
+  padding: 3px;
+  font-size: 20px;
+  p {
+    text-transform: uppercase;
+    color: forestgreen;
+  }
+}
