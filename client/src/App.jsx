@@ -3,17 +3,22 @@ import { generateMaze, solve } from "./components/util.js";
 import "./App.css";
 import CountdownTimer from "./components/CountDown.jsx";
 import OpacityControl from "./components/OpacityControl.jsx";
+import panelBg from "./assets/panelBg.png";
+import Bgpanel from "./assets/BgPanel.png";
 import CameraCapture from "./components/CameraFeed.jsx";
-
+import AlertBox from "./components/AlertBox.jsx";
+import { gameProgress } from "./components/util.js";
+import { getWallColor } from "./components/util.js";
+import MazeSizeSlider from "./components/Slider.jsx";
 export default function App() {
   const [gameId, setGameId] = useState(1);
   const [status, setStatus] = useState("playing");
-
+  const [wallColor, setWallColor] = useState("cyan");
   const [size, setSize] = useState(25); //set maze size to 30
   const [cheatMode, setCheatMode] = useState(false);
-
+  const [direction, setDirection] = useState(null);
   const [userPosition, setUserPosition] = useState([0, 0]);
-
+  const [alert, setAlert] = useState(null);
   const maze = useMemo(() => generateMaze(size, size), [size, gameId]);
   const solution = useMemo(() => {
     const s = new Set();
@@ -82,27 +87,63 @@ export default function App() {
     if ((key === "ArrowLeft" || key === "KeyA") && maze[i][j][3] === 1) {
       setUserPosition([i, j - 1]);
     }
+    const progress = gameProgress(userPosition[0], userPosition[1], solution);
+    setWallColor(getWallColor(progress));
   };
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:4000");
+    ws.onopen = () =>
+      console.log("✅ Connected to WebSocket server for direction");
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("Results", data);
+        if (data.alert) {
+          setAlert("Center your view!");
 
-  const handleUpdateSettings = () => {
+        } else if (data.direction && !data.alert) {
+          setDirection(data.direction);
+        } else console.log(data.message);
+      } catch (err) {
+        console.error("Invalid JSON:", err);
+      }
+    };
+
+    ws.onclose = () => console.log("❌ WebSocket disconnected");
+    ws.onerror = (err) => console.error("⚠️ WebSocket error:", err);
+
+    return () => ws.close();
+  }, []);
+  useEffect(() => {
+    if (!direction || status !== "playing") return;
+
+    const [i, j] = userPosition;
+
+    switch (direction) {
+      case "up":
+        if (maze[i][j][0] === 1) setUserPosition([i - 1, j]);
+        break;
+      case "right":
+        if (maze[i][j][1] === 1) setUserPosition([i, j + 1]);
+        break;
+      case "down":
+        if (maze[i][j][2] === 1) setUserPosition([i + 1, j]);
+        break;
+      case "left":
+        if (maze[i][j][3] === 1) setUserPosition([i, j - 1]);
+        break;
+      default:
+        break;
+    }
+  }, [direction]);
+
+  const handleUpdateSettings = (size) => {
     // setSize(Number(document.querySelector("input[name='mazeSize']").value));
-    setSize(25);
+    setSize(size);
     setUserPosition([0, 0]);
     setStatus("playing");
     setGameId(gameId + 1);
   };
-  const [brightness, setBrightness] = useState(100);
-  const [opacity, setOpacity] = useState(1);
-
-
-  useEffect(() => {
-    document.documentElement.style.setProperty(
-      "--wall-brightness",
-      `${brightness}%`
-    );
-    document.documentElement.style.setProperty("--wall-opacity", opacity);
-  }, [brightness, opacity]);
-
   return (
     <div
       onKeyDown={handleMove}
@@ -133,25 +174,50 @@ export default function App() {
           defaultValue="10"
         />
       </div> */}
-
-      <div className="setting  bg-white p-4 rounded-lg flex flex-col items-center mb-4 ">
+      {/* bg-[#71737f5f]  */}
+      <div
+        className="setting flex flex-col items-center mb-4 w-[308px] h-[90vh] p-6"
+        style={{
+          backgroundImage: `url(${panelBg})`,
+          backgroundSize: "100% 100%", // stretches image to fill container
+          backgroundRepeat: "no-repeat", // prevent tiling
+          backgroundPosition: "center",
+          borderRadius: "20px",
+        }}
+      >
         <CameraCapture />
-        <CountdownTimer />
-        <button
-          onClick={handleUpdateSettings}
-          className="px-5 py-2 bg-[#222] rounded-md m-2 text-white hover:bg-gray-800 font-bold"
-        >
-          Restart game
-        </button>
-        <div className="flex items-center justify-center gap-2">
-          <label htmlFor="cheatMode">Cheat mode</label>
-          <input
-            type="checkbox"
-            name="cheatMode"
-            onChange={(e) => setCheatMode(e.target.checked)}
-          />
+       {alert && <AlertBox message={alert} /> }
+        <div className="flex justify-center items-center gap-4">
+          <div className="flex flex-col items-center ">
+            <button
+              onClick={() => handleUpdateSettings(size)}
+              className="w-10 h-10 rounded-full bg-gradient-to-b from-emerald-400 to-emerald-700 
+               shadow-[0_6px_0_#14532d] active:translate-y-[6px] 
+               active:shadow-[0_0px_0_#14532d] flex items-center justify-center 
+               text-8xl text-white transition-all duration-150 hover:brightness-110"
+            >
+              🚀
+            </button>
+            <span className="text-white text-sm text-lg mt-2">Restart</span>
+          </div>
+
+          <div className="flex flex-col items-center ">
+            <button
+              onClick={() => setCheatMode(!cheatMode)}
+              className="w-10 h-10 rounded-full bg-gradient-to-b from-emerald-400 to-emerald-700 
+               shadow-[0_6px_0_#14532d] active:translate-y-[6px] 
+               active:shadow-[0_0px_0_#14532d] flex items-center justify-center 
+               text-8xl text-white transition-all duration-150 hover:brightness-110"
+            >
+              🕵️
+            </button>
+            <span className="text-white text-sm  mt-2">CheatMode</span>
+          </div>
         </div>
-        {/* <OpacityControl /> */}
+        <MazeSizeSlider
+          size={size}
+          handleSizeChange={(e) => setSize(Number(e.target.value))}
+        />
       </div>
 
       <table id="maze" className="w-[60vw] h-[80vh] ">
@@ -159,7 +225,11 @@ export default function App() {
           {maze.map((row, i) => (
             <tr key={`row-${i}`}>
               {row.map((cell, j) => (
-                <td key={`cell-${i}-${j}`} className={`${makeClassName(i, j)}`}>
+                <td
+                  key={`cell-${i}-${j}`}
+                  className={`${makeClassName(i, j)}`}
+                  style={{ borderColor: wallColor }}
+                >
                   <div />
                 </td>
               ))}
@@ -168,7 +238,7 @@ export default function App() {
         </tbody>
       </table>
       {status !== "playing" && (
-        <div className="info" onClick={handleUpdateSettings}>
+        <div className="info" onClick={size}>
           <p>you won (click here to play again)</p>
         </div>
       )}
