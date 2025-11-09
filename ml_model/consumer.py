@@ -59,7 +59,7 @@ def callback(ch, method, properties, body):
             # print(f"🧠 Classification result: {result}")
 
             # Publish result
-            result_payload = json.dumps({"alert": result,
+            result_payload = json.dumps({"alert": True,
                                          "direction": "N/A",
                                          "message": f"Image classified as {result}"}).encode()
             channel.basic_publish(
