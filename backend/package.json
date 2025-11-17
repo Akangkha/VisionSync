@@ -10,7 +10,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js",
     "producer": "nodemon producer.js",
-    "consumer": "nodemon consumer.js"
+    "consumer": "nodemon consumer.js",
+    "relay": "nodemon relay_consumer.js"
   },
   "dependencies": {
     "amqplib": "^0.9.1",

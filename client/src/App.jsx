@@ -1,8 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { generateMaze, solve } from "./components/util.js";
 import "./App.css";
 import CountdownTimer from "./components/CountDown.jsx";
 import OpacityControl from "./components/OpacityControl.jsx";
+import jumpAudio from "./audio/jump.mp3";
+import goggles from "./assets/image.png";
 import panelBg from "./assets/panelBg.png";
 import Bgpanel from "./assets/BgPanel.png";
 import CameraCapture from "./components/CameraFeed.jsx";
@@ -13,10 +15,12 @@ import MazeSizeSlider from "./components/Slider.jsx";
 export default function App() {
   const [gameId, setGameId] = useState(1);
   const [status, setStatus] = useState("playing");
+  const moveSoundRef = useRef(null);
   const [wallColor, setWallColor] = useState("cyan");
   const [size, setSize] = useState(25); //set maze size to 30
   const [cheatMode, setCheatMode] = useState(false);
   const [direction, setDirection] = useState(null);
+  const [filter, setFilter] = useState(false);
   const [userPosition, setUserPosition] = useState([0, 0]);
   const [alert, setAlert] = useState(null);
   const maze = useMemo(() => generateMaze(size, size), [size, gameId]);
@@ -72,6 +76,10 @@ export default function App() {
     if (status !== "playing") {
       return;
     }
+    if (moveSoundRef.current) {
+      moveSoundRef.current.currentTime = 0;
+      moveSoundRef.current.play();
+    }
     const key = e.code;
 
     const [i, j] = userPosition;
@@ -91,18 +99,20 @@ export default function App() {
     setWallColor(getWallColor(progress));
   };
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:4000");
+    const ws = new WebSocket("ws://localhost:5000");
     ws.onopen = () =>
       console.log("✅ Connected to WebSocket server for direction");
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("Results", data);
+        // console.log("Results", data);
         if (data.alert) {
           setAlert("Center your view!");
-
         } else if (data.direction && !data.alert) {
           setDirection(data.direction);
+          console.log(data.direction);
+          handleGaze(data.direction);
+          setAlert(null);
         } else console.log(data.message);
       } catch (err) {
         console.error("Invalid JSON:", err);
@@ -114,28 +124,30 @@ export default function App() {
 
     return () => ws.close();
   }, []);
-  useEffect(() => {
-    if (!direction || status !== "playing") return;
 
+  const handleGaze = (direction) => {
+    if (!direction || direction === "N/A") return;
     const [i, j] = userPosition;
-
-    switch (direction) {
-      case "up":
-        if (maze[i][j][0] === 1) setUserPosition([i - 1, j]);
-        break;
-      case "right":
-        if (maze[i][j][1] === 1) setUserPosition([i, j + 1]);
-        break;
-      case "down":
-        if (maze[i][j][2] === 1) setUserPosition([i + 1, j]);
-        break;
-      case "left":
-        if (maze[i][j][3] === 1) setUserPosition([i, j - 1]);
-        break;
-      default:
-        break;
+    if (moveSoundRef.current) {
+      moveSoundRef.current.currentTime = 0;
+      moveSoundRef.current.play();
     }
-  }, [direction]);
+
+    setUserPosition(([i, j]) => {
+      switch (direction) {
+        case "up":
+          return maze[i][j][0] === 1 ? [i - 1, j] : [i, j];
+        case "right":
+          return maze[i][j][1] === 1 ? [i, j + 1] : [i, j];
+        case "down":
+          return maze[i][j][2] === 1 ? [i + 1, j] : [i, j];
+        case "left":
+          return maze[i][j][3] === 1 ? [i, j - 1] : [i, j];
+        default:
+          return [i, j];
+      }
+    });
+  };
 
   const handleUpdateSettings = (size) => {
     // setSize(Number(document.querySelector("input[name='mazeSize']").value));
@@ -150,20 +162,9 @@ export default function App() {
       tabIndex={-1}
       className="App relative flex   w-screen h-screen outline-none items-center  justify-around"
     >
+      {" "}
+      <audio ref={moveSoundRef} src={jumpAudio} preload="auto" />
       {/* Overlay */}
-      {/* <div
-    className="eye-overlay"
-    style={{
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      pointerEvents: "none", // so clicks still go through
-      background: "linear-gradient(to right, rgba(255,0,0,0.5) 50%, rgba(0,255,255,0.5) 50%)",
-      zIndex: 10,
-    }}
-  /> */}
       {/* <div className="setting">
         <label htmlFor="mazeSize">Size of maze (5-40):</label>
         <input
@@ -186,7 +187,7 @@ export default function App() {
         }}
       >
         <CameraCapture />
-       {alert && <AlertBox message={alert} /> }
+        {alert && <AlertBox message={alert} />}
         <div className="flex justify-center items-center gap-4">
           <div className="flex flex-col items-center ">
             <button
@@ -219,24 +220,55 @@ export default function App() {
           handleSizeChange={(e) => setSize(Number(e.target.value))}
         />
       </div>
+      <div className="relative w-[60vw] h-[80vh]">
+        {/* Maze table */}
+        <table id="maze" className="w-full h-full relative z-10">
+          <tbody>
+            {maze.map((row, i) => (
+              <tr key={`row-${i}`}>
+                {row.map((cell, j) => (
+                  <td
+                    key={`cell-${i}-${j}`}
+                    className={`${makeClassName(i, j)}`}
+                    style={{ borderColor: wallColor }}
+                  >
+                    <div />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-      <table id="maze" className="w-[60vw] h-[80vh] ">
-        <tbody>
-          {maze.map((row, i) => (
-            <tr key={`row-${i}`}>
-              {row.map((cell, j) => (
-                <td
-                  key={`cell-${i}-${j}`}
-                  className={`${makeClassName(i, j)}`}
-                  style={{ borderColor: wallColor }}
-                >
-                  <div />
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        {/* 3D overlay */}
+        {filter && (
+          <div
+            className="eye-overlay"
+            style={{
+              position: "absolute",
+              top: 12,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none", // so clicks still go through
+              background:
+                "linear-gradient(to right, rgba(255,0,0,0.5) 50%, rgba(0,255,255,0.5) 50%)",
+              zIndex: 10,
+            }}
+          />
+        )}
+      </div>
+      <div className="toggle-cheatmode absolute top-4 right-4 flex items-center gap-2">
+        <img src={goggles} alt="goggles" className="w-16 h-auto" />
+        <label class="switch">
+          <input
+            type="checkbox"
+            onChange={() => setFilter(!filter)}
+            value={filter}
+          />
+          <span class="slider round"></span>
+        </label>
+      </div>
       {status !== "playing" && (
         <div className="info" onClick={size}>
           <p>you won (click here to play again)</p>

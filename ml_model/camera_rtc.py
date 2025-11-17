@@ -22,6 +22,7 @@ async def main():
 
         async for msg in ws:
             data = json.loads(msg.data)
+            print("📨 Message received:", data.get("type"))
             if data["type"] == "offer":
                 offer = RTCSessionDescription(sdp=data["sdp"], type="offer")
                 await pc.setRemoteDescription(offer)

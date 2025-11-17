@@ -42,20 +42,71 @@ const CameraCapture = () => {
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
           const imageData = canvas.toDataURL("image/jpeg");
-          ws.send(JSON.stringify({ type: "image", image: imageData }));
+          // ws.send(JSON.stringify({ type: "image", image: imageData }));
           // console.log("📤 Sent image to server");
-        }, 5000); //time
+        }, 65000); //time
         return () => clearInterval(interval);
       } catch (err) {
         console.error("Error accessing camera:", err);
       }
     };
 
-    startCamera();
+    // startCamera();
 
     return () => ws.close();
   }, []);
 
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:4000"); // signaling server
+    let pc;
+
+    ws.onopen = async () => {
+      // setStatus("Connected to signaling server");
+
+      // 1️⃣ get camera stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480 },
+        audio: false,
+      });
+      videoRef.current.srcObject = stream;
+
+      // 2️⃣ create WebRTC peer
+      pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      });
+
+      // send each track
+      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+
+      // 3️⃣ handle ICE candidates
+      pc.onicecandidate = (e) => {
+        if (e.candidate)
+          ws.send(
+            JSON.stringify({ type: "candidate", candidate: e.candidate })
+          );
+      };
+
+      // 4️⃣ create and send SDP offer
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      ws.send(JSON.stringify({ type: "offer", sdp: offer.sdp }));
+    };
+
+    ws.onmessage = async (msg) => {
+      const data = JSON.parse(msg.data);
+      if (data.type === "answer") {
+        await pc.setRemoteDescription({ type: "answer", sdp: data.sdp });
+        console.log("Streaming to ML server...");
+      } else if (data.type === "candidate") {
+        await pc.addIceCandidate(data.candidate);
+      }
+    };
+
+    return () => {
+      ws.close();
+      pc && pc.close();
+    };
+  }, []);
   return (
     <div className="flex flex-col items-center gap-4 p-4 w-[70%]">
       <video
