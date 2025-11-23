@@ -18,7 +18,8 @@ UPLOADS_DIR = "processed_images"
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 # Connect to RabbitMQ
-params = pika.URLParameters(RABBITMQ_URL)
+RABBITMQ_URL = "amqps://tvccbsoq:GeTnThLYePzJW7hl5kyTAT6yD-luoH3i@campbell.lmq.cloudamqp.com/tvccbsoq"
+params = pika.URLParameters("amqps://tvccbsoq:GeTnThLYePzJW7hl5kyTAT6yD-luoH3i@campbell.lmq.cloudamqp.com/tvccbsoq")
 connection = pika.BlockingConnection(params)
 channel = connection.channel()
 
