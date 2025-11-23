@@ -150,3 +150,49 @@ function getOptions(x, y, maze, visited) {
 
   return options;
 }
+
+export function gameProgress(currentX, currentY, solution) {
+  if (!solution || solution.length === 0) return 0;
+
+  // Find the index of the current position in the solution path
+  const index = solution.findIndex(
+    ([x, y]) => x === currentX && y === currentY
+  );
+
+  // If player is not on the solution path yet
+  if (index === -1) return 0;
+
+  // Calculate progress as a percentage of path covered
+  const progress = ((index + 1) / solution.length) * 100;
+
+  return Math.min(progress, 100);
+}
+
+export function getWallColor(progress) {
+  if (progress <= 33) {
+    // cyan → red
+    const ratio = progress / 33;
+    return interpolateColor([0, 255, 255], [255, 0, 0], ratio);
+  } else if (progress <= 66) {
+    // red → orange
+    const ratio = (progress - 33) / 33;
+    return interpolateColor([255, 0, 0], [255, 165, 0], ratio);
+  } else {
+    // orange → white
+    const ratio = (progress - 66) / 34;
+    return interpolateColor([255, 165, 0], [255, 255, 255], ratio);
+  }
+}
+
+/**
+ * Linearly interpolates between two RGB colors.
+ */
+function interpolateColor(rgb1, rgb2, t) {
+  const r = Math.round(rgb1[0] + (rgb2[0] - rgb1[0]) * t);
+  const g = Math.round(rgb1[1] + (rgb2[1] - rgb1[1]) * t);
+  const b = Math.round(rgb1[2] + (rgb2[2] - rgb1[2]) * t);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+
+

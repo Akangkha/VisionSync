@@ -9,7 +9,7 @@ if (!fs.existsSync(uploadDir)) {
   console.log("📁 Created uploads folder");
 }
 console.log("📁 Uploads folder exists at:", uploadDir);
-const RABBITMQ_URL = process.env.RABBITMQ_URL2;
+const RABBITMQ_URL = process.env.RABBITMQ_URL1;
 const QUEUE_NAME = process.env.QUEUE_NAME;
 
 (async () => {
@@ -39,9 +39,9 @@ const QUEUE_NAME = process.env.QUEUE_NAME;
             uploadDir,
             `image-${Date.now()}.${imageType}`
           );
-          fs.writeFileSync(filePath, buffer);
+          // fs.writeFileSync(filePath, buffer);
 
-          console.log(`✅ Saved image as ${filePath}`);
+          // console.log(`✅ Saved image as ${filePath}`);
         }
       } else {
         console.warn("⚠️ Received JSON without image field");

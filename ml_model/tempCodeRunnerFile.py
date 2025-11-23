@@ -7,10 +7,8 @@ from PIL import Image
 from datetime import datetime
 
 
-
-# RABBITMQ_URL = os.getenv("RABBITMQ_URL2", "amqp://guest:guest@localhost:5672/")
-# QUEUE_NAME = os.getenv("QUEUE_NAME", "image_queue")
 QUEUE_NAME = "image_queue"
+RABBITMQ_URL = "amqp://akangkha:akangkha@localhost:5672/"
 RESULT_QUEUE = "results_queue"
 UPLOADS_DIR = "processed_images"
 
@@ -55,20 +53,22 @@ def callback(ch, method, properties, body):
             result = classify_image(image)
 
             # Save processed image
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            file_path = os.path.join(UPLOADS_DIR, f"{result}_{timestamp}.png")
-            image.save(file_path)
-            print(f"✅ Processed and saved image: {file_path}")
-            print(f"🧠 Classification result: {result}")
+            # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # file_path = os.path.join(UPLOADS_DIR, f"{result}_{timestamp}.png")
+            # image.save(file_path)
+            # print(f"✅ Processed and saved image: {file_path}")
+            # print(f"🧠 Classification result: {result}")
 
             # Publish result
-            result_payload = json.dumps({"classification": result})
+            result_payload = json.dumps({"alert": result,
+                                         "direction": "N/A",
+                                         "message": f"Image classified as {result}"}).encode()
             channel.basic_publish(
                 exchange="",
                 routing_key=RESULT_QUEUE,
                 body=result_payload
             )
-            print(f"📤 Published result to {RESULT_QUEUE}: {result}\n")
+            print(f"📤 Published result to {RESULT_QUEUE}: {result_payload}\n")
 
         else:
             print("⚠️ Received message without image field")
