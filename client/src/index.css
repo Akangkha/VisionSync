@@ -1,2 +1,6 @@
-    /* src/index.css */
-    @import "tailwindcss";
+/* src/index.css */
+@import "tailwindcss";
+html,
+body {
+  scroll-behavior: smooth;
+}
