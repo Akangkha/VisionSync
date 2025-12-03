@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 QUEUE_NAME = "image_queue"
-RABBITMQ_URL = "amqp://akangkha:akangkha@localhost:5672/"
+RABBITMQ_URL = "YOUR URL"
 RESULT_QUEUE = "results_queue"
 UPLOADS_DIR = "processed_images"
 
