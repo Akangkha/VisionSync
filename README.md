@@ -73,9 +73,9 @@ If you’d like to contribute, report issues, or provide feedback:
 
 * Create an issue or pull request on GitHub.
 * Or reach out via
-* 
+<a href="https://www.linkedin.com/in/akangkha-sarkar">
+    <img src="https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
+ </a>
 
 ---
 
-If you like — I can **auto-generate a full README.md file** for you **populated with placeholders** (for things like screenshot, license, contact) that you just need to copy-paste and fill.
-Do you want me to build that for you now?
